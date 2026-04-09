@@ -2,18 +2,50 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>MiniFortnite V2 - 2D</title>
+    <title>MiniFortnite V2 Mobile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <canvas id="gameCanvas" width="960" height="540"></canvas>
+    <canvas id="gameCanvas"></canvas>
 
     <div id="ui">
-        <div id="hpBar"></div>
-        <div id="energyBar"></div>
-        <div id="weaponInfo"></div>
-        <div id="stormInfo"></div>
-        <div id="editInfo">E: Edit mode (klikk vegg for å fjerne)</div>
+        <div id="bars">
+            <div class="bar" id="hpBar"><span>HP</span></div>
+            <div class="bar" id="energyBar"><span>ENERGY</span></div>
+        </div>
+
+        <div id="infoTop">
+            <div id="weaponInfo"></div>
+            <div id="stormInfo"></div>
+            <div id="modeInfo"></div>
+        </div>
+
+        <div id="inventory">
+            <div class="slot" data-slot="0"></div>
+            <div class="slot" data-slot="1"></div>
+            <div class="slot" data-slot="2"></div>
+            <div class="slot" data-slot="3"></div>
+            <div class="slot" data-slot="4"></div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div id="controls">
+        <div id="leftStick">
+            <div class="stickBase"></div>
+            <div class="stickThumb" id="leftThumb"></div>
+        </div>
+
+        <div id="rightStick">
+            <div class="stickBase"></div>
+            <div class="stickThumb" id="rightThumb"></div>
+        </div>
+
+        <button id="btnUse">USE</button>
+        <button id="btnBuild">BUILD</button>
+        <button id="btnEdit">EDIT</button>
+        <button id="btnSprint">SPRINT</button>
     </div>
 
     <script src="game.js"></script>
