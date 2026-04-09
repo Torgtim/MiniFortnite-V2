@@ -1,0 +1,54 @@
+body {
+    margin: 0;
+    background: #111;
+    color: #fff;
+    font-family: system-ui, sans-serif;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#gameCanvas {
+    background: #1b1b1b;
+    border: 2px solid #444;
+}
+
+#ui {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    pointer-events: none;
+    font-size: 14px;
+}
+
+#hpBar, #energyBar {
+    width: 200px;
+    height: 16px;
+    background: #333;
+    margin-bottom: 4px;
+    position: relative;
+}
+
+#hpBar::after, #energyBar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+}
+
+#hpBar::after {
+    background: #e53935;
+    width: 100%;
+}
+
+#energyBar::after {
+    background: #42a5f5;
+    width: 100%;
+}
+
+#weaponInfo, #stormInfo, #editInfo {
+    margin-top: 4px;
+}
