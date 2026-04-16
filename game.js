@@ -11,12 +11,13 @@ resizeCanvas();
 const W = () => canvas.width;
 const H = () => canvas.height;
 
-// UI elements
-const hpBar = document.getElementById("hpBar");
-const energyBar = document.getElementById("energyBar");
-const weaponInfo = document.getElementById("weaponInfo");
-const stormInfo = document.getElementById("stormInfo");
-const modeInfo = document.getElementById("modeInfo");
+// UI
+const hpText = document.getElementById("hpText");
+const shieldText = document.getElementById("shieldText");
+const energyText = document.getElementById("energyText");
+const stormText = document.getElementById("stormText");
+const modeText = document.getElementById("modeText");
+const weaponText = document.getElementById("weaponText");
 const inventorySlots = Array.from(document.querySelectorAll(".slot"));
 
 const btnUse = document.getElementById("btnUse");
@@ -29,7 +30,7 @@ const rightStick = document.getElementById("rightStick");
 const leftThumb = document.getElementById("leftThumb");
 const rightThumb = document.getElementById("rightThumb");
 
-// Game constants
+// Konstanter
 const PLAYER_BASE_SPEED = 2.2;
 const SPRINT_MULT = 1.7;
 const ENERGY_MAX = 100;
@@ -62,7 +63,7 @@ function randomWeapon() {
 // State
 let player;
 let bots = [];
-let walls = [];
+let walls = [];   // hver vegg: {x,y,w,h,hp,maxHp,parts:[{hp,maxHp},...]}
 let loot = [];
 let bullets = [];
 
@@ -83,6 +84,16 @@ let inventory = [null, null, null, null, null];
 let selectedSlot = 0;
 let slotHoldTimers = [0, 0, 0, 0, 0];
 let slotHoldActive = [false, false, false, false, false];
+
+function clamp(v, min, max) {
+    return v < min ? min : v > max ? max : v;
+}
+
+function dist2(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return dx * dx + dy * dy;
+}
 
 function createPlayer() {
     return {
@@ -117,16 +128,27 @@ function createBot() {
 }
 
 function createWall(x, y, w, h, hp = 120) {
-    return { x, y, w, h, hp, maxHp: hp };
+    const partHp = hp / 4;
+    return {
+        x, y, w, h,
+        hp,
+        maxHp: hp,
+        parts: [
+            { hp: partHp, maxHp: partHp }, // top-left
+            { hp: partHp, maxHp: partHp }, // top-right
+            { hp: partHp, maxHp: partHp }, // bottom-left
+            { hp: partHp, maxHp: partHp }  // bottom-right
+        ]
+    };
 }
 
 function createRandomBuilding() {
-    const bw = 40 + Math.random() * 80;
-    const bh = 40 + Math.random() * 80;
+    const bw = 60 + Math.random() * 80;
+    const bh = 60 + Math.random() * 80;
     const margin = 80;
     const x = margin + Math.random() * (W() - 2 * margin - bw);
     const y = margin + Math.random() * (H() - 2 * margin - bh);
-    return createWall(x, y, bw, bh, 150 + Math.random() * 100);
+    return createWall(x, y, bw, bh, 180 + Math.random() * 120);
 }
 
 function createLoot() {
@@ -158,16 +180,6 @@ function createBullet(owner, x, y, angle, weapon) {
     return bullets;
 }
 
-function clamp(v, min, max) {
-    return v < min ? min : v > max ? max : v;
-}
-
-function dist2(a, b) {
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-    return dx * dx + dy * dy;
-}
-
 function rectContainsPoint(rect, px, py) {
     return px >= rect.x && px <= rect.x + rect.w && py >= rect.y && py <= rect.y + rect.h;
 }
@@ -193,7 +205,7 @@ function resolveCircleRect(c, r) {
     }
 }
 
-// Inventory helpers
+// Inventory
 function setInventorySlot(i, item) {
     inventory[i] = item;
     const slot = inventorySlots[i];
@@ -253,7 +265,7 @@ function resetGame() {
     for (let i = 0; i < BUILDING_COUNT; i++) walls.push(createRandomBuilding());
     for (let i = 0; i < LOOT_COUNT; i++) loot.push(createLoot());
 
-    // sørg for at player ikke spawner rett ved masse bots
+    // ikke spawne rett ved bots
     for (const bot of bots) {
         const d2 = dist2(player, bot);
         const minDist = 250;
@@ -270,7 +282,7 @@ function resetGame() {
 }
 resetGame();
 
-// Touch / controls
+// Joystick helpers
 function getCenter(el) {
     const rect = el.getBoundingClientRect();
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, r: rect.width / 2 };
@@ -303,7 +315,6 @@ function handleStickTouchMove(e) {
             const maxDist = leftCenter.r;
             const nx = dist > 0 ? dx / dist : 0;
             const ny = dist > 0 ? dy / dist : 0;
-            const clampedDist = Math.min(dist, maxDist);
             moveVector.x = nx;
             moveVector.y = ny;
             leftThumb.style.transform = `translate(${nx * (maxDist - 30)}px, ${ny * (maxDist - 30)}px)`;
@@ -315,9 +326,10 @@ function handleStickTouchMove(e) {
             const maxDist = rightCenter.r;
             const nx = dist > 0 ? dx / dist : 0;
             const ny = dist > 0 ? dy / dist : 0;
-            const clampedDist = Math.min(dist, maxDist);
-            aimVector.x = nx || aimVector.x;
-            aimVector.y = ny || aimVector.y;
+            if (dist > 10) {
+                aimVector.x = nx;
+                aimVector.y = ny;
+            }
             rightThumb.style.transform = `translate(${nx * (maxDist - 30)}px, ${ny * (maxDist - 30)}px)`;
         }
     }
@@ -367,7 +379,7 @@ btnEdit.addEventListener("touchstart", () => {
     if (editMode) buildMode = false;
 });
 
-// Inventory touch (tap = select, hold = drop)
+// Inventory touch
 inventorySlots.forEach((slotEl, idx) => {
     slotEl.addEventListener("touchstart", () => {
         slotHoldActive[idx] = true;
@@ -388,18 +400,40 @@ inventorySlots.forEach((slotEl, idx) => {
     });
 });
 
-// Edit mode: tap vegg for å fjerne
+// Canvas touch: build + edit
 canvas.addEventListener("touchstart", e => {
-    if (!editMode) return;
     const touch = e.changedTouches[0];
     const rect = canvas.getBoundingClientRect();
     const x = touch.clientX - rect.left;
     const y = touch.clientY - rect.top;
-    for (const w of walls) {
-        if (rectContainsPoint(w, x, y)) {
-            w.hp = 0;
-            break;
+
+    if (editMode) {
+        // finn vegg og del
+        for (const w of walls) {
+            if (!rectContainsPoint(w, x, y)) continue;
+            const localX = x - w.x;
+            const localY = y - w.y;
+            const halfW = w.w / 2;
+            const halfH = w.h / 2;
+            let partIndex = 0;
+            if (localX >= halfW && localY < halfH) partIndex = 1;      // top-right
+            else if (localX < halfW && localY >= halfH) partIndex = 2; // bottom-left
+            else if (localX >= halfW && localY >= halfH) partIndex = 3;// bottom-right
+            w.parts[partIndex].hp = 0;
+            // oppdater total hp
+            w.hp = w.parts.reduce((sum, p) => sum + p.hp, 0);
+            return;
         }
+        return;
+    }
+
+    if (buildMode) {
+        const w = 80;
+        const h = 80;
+        const wx = x - w / 2;
+        const wy = y - h / 2;
+        walls.push(createWall(wx, wy, w, h, 200));
+        return;
     }
 });
 
@@ -409,11 +443,8 @@ function update(dt) {
 
     stormTime += dt;
 
-    // slot hold timers
     for (let i = 0; i < 5; i++) {
-        if (slotHoldActive[i]) {
-            slotHoldTimers[i] += dt;
-        }
+        if (slotHoldActive[i]) slotHoldTimers[i] += dt;
     }
 
     handlePlayer(dt);
@@ -463,19 +494,6 @@ function handleUseAction(dt) {
     const item = getSelectedItem();
     if (!item) return;
 
-    if (buildMode) {
-        // bygg vegg foran spilleren
-        const angle = Math.atan2(aimVector.y, aimVector.x);
-        const dist = 60;
-        const w = 50;
-        const h = 20;
-        const x = player.x + Math.cos(angle) * dist - w / 2;
-        const y = player.y + Math.sin(angle) * dist - h / 2;
-        walls.push(createWall(x, y, w, h, 120));
-        buildMode = false;
-        return;
-    }
-
     if (item.type === "weapon") {
         if (player.fireCooldown <= 0) {
             const angle = Math.atan2(aimVector.y, aimVector.x);
@@ -489,13 +507,11 @@ function handleUseAction(dt) {
         const missingShield = 100 - player.shield;
         if (missingShield > 0) {
             player.shield = clamp(player.shield + item.shield, 0, 100);
-            // bruk opp shield item
             const idx = selectedSlot;
             setInventorySlot(idx, null);
             selectSlot(0);
         }
     } else if (item.type === "pickaxe") {
-        // pickaxe: nærmeste vegg foran spilleren
         const angle = Math.atan2(aimVector.y, aimVector.x);
         const reach = 60;
         const px = player.x + Math.cos(angle) * reach;
@@ -514,7 +530,16 @@ function handleUseAction(dt) {
             }
         }
         if (best) {
-            best.hp -= PICKAXE.damage;
+            // pickaxe tar 10 hp fra hele veggen (fordelt)
+            const dmg = PICKAXE.damage;
+            let remaining = dmg;
+            for (const part of best.parts) {
+                if (remaining <= 0) break;
+                const take = Math.min(part.hp, remaining);
+                part.hp -= take;
+                remaining -= take;
+            }
+            best.hp = best.parts.reduce((sum, p) => sum + p.hp, 0);
         }
     }
 }
@@ -568,7 +593,11 @@ function explodeGrenade(b) {
         const cy = w.y + w.h / 2;
         const d2 = (cx - b.x) ** 2 + (cy - b.y) ** 2;
         if (d2 <= radius2) {
-            w.hp -= b.damage;
+            const perPart = b.damage / 4;
+            for (const part of w.parts) {
+                part.hp -= perPart;
+            }
+            w.hp = w.parts.reduce((sum, p) => sum + p.hp, 0);
         }
     }
 }
@@ -612,7 +641,17 @@ function handleBullets(dt) {
                 if (b.grenade) {
                     explodeGrenade(b);
                 } else {
-                    w.hp -= b.damage;
+                    // fordel skade på nærmeste del
+                    const localX = b.x - w.x;
+                    const localY = b.y - w.y;
+                    const halfW = w.w / 2;
+                    const halfH = w.h / 2;
+                    let partIndex = 0;
+                    if (localX >= halfW && localY < halfH) partIndex = 1;
+                    else if (localX < halfW && localY >= halfH) partIndex = 2;
+                    else if (localX >= halfW && localY >= halfH) partIndex = 3;
+                    w.parts[partIndex].hp -= b.damage;
+                    w.hp = w.parts.reduce((sum, p) => sum + p.hp, 0);
                 }
                 b.exploded = true;
                 break;
@@ -640,7 +679,6 @@ function handleBullets(dt) {
 }
 
 function handleLoot(dt) {
-    // pickup
     loot = loot.filter(l => {
         const d2 = (l.x - player.x) ** 2 + (l.y - player.y) ** 2;
         if (d2 <= (player.r + l.r) ** 2) {
@@ -689,12 +727,29 @@ function render() {
     ctx.stroke();
     ctx.restore();
 
+    // Vegger (med hull der parts er døde)
     for (const w of walls) {
-        const hpRatio = w.hp / w.maxHp;
-        ctx.fillStyle = `rgba(${80 + 80 * (1 - hpRatio)}, ${80 + 40 * hpRatio}, 120, 1)`;
-        ctx.fillRect(w.x, w.y, w.w, w.h);
+        const halfW = w.w / 2;
+        const halfH = w.h / 2;
+
+        const partsRects = [
+            { x: w.x,         y: w.y,          w: halfW, h: halfH }, // TL
+            { x: w.x+halfW,   y: w.y,          w: halfW, h: halfH }, // TR
+            { x: w.x,         y: w.y+halfH,    w: halfW, h: halfH }, // BL
+            { x: w.x+halfW,   y: w.y+halfH,    w: halfW, h: halfH }  // BR
+        ];
+
+        for (let i = 0; i < 4; i++) {
+            const part = w.parts[i];
+            if (part.hp <= 0) continue;
+            const rect = partsRects[i];
+            const ratio = part.hp / part.maxHp;
+            ctx.fillStyle = `rgba(${80 + 80 * (1 - ratio)}, ${80 + 40 * ratio}, 120, 1)`;
+            ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+        }
     }
 
+    // Loot
     for (const l of loot) {
         ctx.beginPath();
         ctx.fillStyle = "#ffd54f";
@@ -706,6 +761,7 @@ function render() {
         ctx.fillText(l.item.name[0], l.x, l.y + 3);
     }
 
+    // Bullets
     for (const b of bullets) {
         ctx.beginPath();
         ctx.fillStyle = b.grenade ? "#ff7043" : "#ffffff";
@@ -713,6 +769,7 @@ function render() {
         ctx.fill();
     }
 
+    // Bots
     for (const bot of bots) {
         if (!bot.alive) continue;
         ctx.beginPath();
@@ -729,6 +786,7 @@ function render() {
         ctx.fillRect(bot.x - w / 2, bot.y - bot.r - 8, w * ratio, h);
     }
 
+    // Player
     if (player.alive) {
         ctx.beginPath();
         ctx.fillStyle = editMode ? "#81c784" : buildMode ? "#ffb74d" : "#42a5f5";
@@ -745,21 +803,18 @@ function render() {
 }
 
 function updateUI() {
-    const hpRatio = clamp(player.hp / player.maxHp, 0, 1);
-    const energyRatio = clamp(player.energy / ENERGY_MAX, 0, 1);
+    hpText.textContent = `HP: ${Math.max(0, Math.floor(player.hp))}`;
+    shieldText.textContent = `Shield: ${Math.floor(player.shield)}`;
+    energyText.textContent = `Energy: ${Math.floor(player.energy)}`;
 
-    hpBar.style.setProperty("background-image",
-        `linear-gradient(to right, #e53935 ${hpRatio * 100}%, #333 ${hpRatio * 100}%)`);
-    energyBar.style.setProperty("background-image",
-        `linear-gradient(to right, #42a5f5 ${energyRatio * 100}%, #333 ${energyRatio * 100}%)`);
-
-    const item = getSelectedItem();
-    const name = item ? item.name : "Ingen";
-    weaponInfo.textContent = `Selected: ${name}`;
     const t = clamp(stormTime / STORM_DURATION, 0, 1);
     const radius = Math.floor(STORM_START_RADIUS + (STORM_END_RADIUS - STORM_START_RADIUS) * t);
-    stormInfo.textContent = `Storm radius: ${radius}`;
-    modeInfo.textContent = `Mode: ${buildMode ? "BUILD" : editMode ? "EDIT" : "COMBAT"} | Shield: ${Math.floor(player.shield)}`;
+    stormText.textContent = `Storm: ${radius}`;
+
+    modeText.textContent = `Mode: ${buildMode ? "BUILD" : editMode ? "EDIT" : "COMBAT"}`;
+
+    const item = getSelectedItem();
+    weaponText.textContent = `Selected: ${item ? item.name : "None"}`;
 }
 
 // Main loop
