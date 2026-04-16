@@ -7,7 +7,7 @@
 
 body {
     margin: 0;
-    background: #05070a;
+    background: #000;
     color: #fff;
     font-family: system-ui, sans-serif;
     overflow: hidden;
@@ -25,85 +25,58 @@ body {
 
 #ui {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    padding: 6px;
+    inset: 0;
     pointer-events: none;
     font-size: 12px;
 }
 
-#bars {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 4px;
-}
-
-.bar {
-    position: relative;
-    flex: 1;
-    height: 14px;
-    background: #333;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.bar span {
+#infoTopLeft {
     position: absolute;
+    top: 6px;
     left: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 9px;
-    text-shadow: 0 0 3px #000;
-}
-
-#hpBar::after,
-#energyBar::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    width: 100%;
-}
-
-#hpBar::after {
-    background: linear-gradient(to right, #e53935 100%, #333 0%);
-}
-
-#energyBar::after {
-    background: linear-gradient(to right, #42a5f5 100%, #333 0%);
-}
-
-#infoTop {
     display: flex;
-    justify-content: space-between;
-    gap: 4px;
-    margin-bottom: 4px;
+    flex-direction: column;
+    gap: 2px;
 }
 
-#weaponInfo, #stormInfo, #modeInfo {
-    background: rgba(0,0,0,0.4);
+#infoTopRight {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: right;
+}
+
+#infoTopLeft div,
+#infoTopRight div {
+    background: rgba(0,0,0,0.5);
     padding: 2px 4px;
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
-/* Inventory */
+/* Inventory nederst */
 
 #inventory {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     gap: 4px;
-    margin-top: 4px;
+    pointer-events: auto;
 }
 
 .slot {
     width: 40px;
     height: 40px;
-    border-radius: 6px;
-    background: rgba(0,0,0,0.5);
+    border-radius: 4px;
     border: 2px solid #555;
+    background: rgba(0,0,0,0.6);
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events: auto;
     position: relative;
 }
 
@@ -127,8 +100,8 @@ body {
 
 #leftStick, #rightStick {
     position: absolute;
-    width: 140px;
-    height: 140px;
+    width: 130px;
+    height: 130px;
     pointer-events: auto;
 }
 
@@ -144,8 +117,7 @@ body {
 
 .stickBase {
     position: absolute;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     border-radius: 50%;
     border: 2px solid rgba(255,255,255,0.2);
     background: rgba(0,0,0,0.3);
@@ -153,14 +125,16 @@ body {
 
 .stickThumb {
     position: absolute;
-    width: 60px;
-    height: 60px;
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.25);
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
 }
+
+/* Buttons */
 
 #btnUse, #btnBuild, #btnEdit, #btnSprint {
     position: absolute;
@@ -175,21 +149,21 @@ body {
 }
 
 #btnUse {
-    right: 30px;
-    bottom: 170px;
+    right: 26px;
+    bottom: 160px;
 }
 
 #btnBuild {
-    right: 120px;
-    bottom: 140px;
+    right: 110px;
+    bottom: 130px;
 }
 
 #btnEdit {
-    right: 120px;
-    bottom: 200px;
+    right: 110px;
+    bottom: 190px;
 }
 
 #btnSprint {
-    left: 30px;
-    bottom: 170px;
+    left: 26px;
+    bottom: 160px;
 }
