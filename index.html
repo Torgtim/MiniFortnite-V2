@@ -10,15 +10,16 @@
     <canvas id="gameCanvas"></canvas>
 
     <div id="ui">
-        <div id="bars">
-            <div class="bar" id="hpBar"><span>HP</span></div>
-            <div class="bar" id="energyBar"><span>ENERGY</span></div>
+        <div id="infoTopLeft">
+            <div id="hpText">HP: 100</div>
+            <div id="shieldText">Shield: 0</div>
+            <div id="energyText">Energy: 100</div>
+            <div id="stormText">Storm: 0</div>
         </div>
 
-        <div id="infoTop">
-            <div id="weaponInfo"></div>
-            <div id="stormInfo"></div>
-            <div id="modeInfo"></div>
+        <div id="infoTopRight">
+            <div id="modeText">Mode: COMBAT</div>
+            <div id="weaponText">Selected: Pickaxe</div>
         </div>
 
         <div id="inventory">
@@ -30,7 +31,6 @@
         </div>
     </div>
 
-    <!-- Controls -->
     <div id="controls">
         <div id="leftStick">
             <div class="stickBase"></div>
